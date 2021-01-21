@@ -16,3 +16,7 @@ func (e nativeError) Description() Description {
 		Summary: e.err.Error(),
 	}
 }
+
+func (e nativeError) Unwrap() error {
+	return e.err
+}
