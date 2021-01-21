@@ -2,9 +2,7 @@ package dag
 
 import (
 	"errors"
-	"log"
 	"sync"
-	"time"
 )
 
 // Walker is used to walk every vertex of a graph in parallel.
@@ -378,7 +376,6 @@ func (w *Walker) walkVertex(v Vertex, info *walkerVertex) {
 	if depsSuccess {
 		diags = w.Callback(v)
 	} else {
-		log.Printf("[TRACE] dag/walk: upstream of %q errored, so skipping", VertexName(v))
 		// This won't be displayed to the user because we'll set upstreamFailed,
 		// but we need to ensure there's at least one error in here so that
 		// the failures will cascade downstream.
@@ -409,7 +406,7 @@ func (w *Walker) waitDeps(
 	cancelCh <-chan struct{}) {
 
 	// For each dependency given to us, wait for it to complete
-	for dep, depCh := range deps {
+	for _, depCh := range deps {
 	DepSatisfied:
 		for {
 			select {
@@ -422,10 +419,6 @@ func (w *Walker) waitDeps(
 				// so that anything waiting on us also doesn't run.
 				doneCh <- false
 				return
-
-			case <-time.After(time.Second * 5):
-				log.Printf("[TRACE] dag/walk: vertex %q is waiting for %q",
-					VertexName(v), VertexName(dep))
 			}
 		}
 	}
