@@ -47,4 +47,4 @@ func main() {
 }
 ```
 
-[dag]: https://github.com/hashicorp/terraform/tree/master/dag
+[dag]: https://github.com/hashicorp/terraform/tree/main/internal/dag
