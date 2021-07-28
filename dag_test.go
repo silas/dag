@@ -207,7 +207,7 @@ func TestAcyclicGraphAncestors(t *testing.T) {
 		t.Fatalf("err: %#v", err)
 	}
 
-	expected := []Vertex{3, 4, 5}
+	expected := []Vertex{0, 1}
 
 	if actual.Len() != len(expected) {
 		t.Fatalf("bad length! expected %#v to have len %d", actual, len(expected))
@@ -233,12 +233,12 @@ func TestAcyclicGraphDescendents(t *testing.T) {
 	g.Connect(BasicEdge(3, 4))
 	g.Connect(BasicEdge(4, 5))
 
-	actual, err := g.Descendents(2)
+	actual, err := g.Descendants(2)
 	if err != nil {
 		t.Fatalf("err: %#v", err)
 	}
 
-	expected := []Vertex{0, 1}
+	expected := []Vertex{3, 4, 5}
 
 	if actual.Len() != len(expected) {
 		t.Fatalf("bad length! expected %#v to have len %d", actual, len(expected))
