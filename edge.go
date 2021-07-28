@@ -25,7 +25,7 @@ type basicEdge struct {
 }
 
 func (e *basicEdge) Hashcode() interface{} {
-	return fmt.Sprintf("%p-%p", e.S, e.T)
+	return fmt.Sprintf("%p-%p", hashcode(e.S), hashcode(e.T))
 }
 
 func (e *basicEdge) Source() Vertex {

@@ -12,7 +12,7 @@ func StronglyConnected(g *Graph) [][]Vertex {
 	}
 	for _, v := range vs {
 		// Recurse on any non-visited nodes
-		if acct.VertexIndex[v] == 0 {
+		if acct.VertexIndex[hashcode(v)] == 0 {
 			stronglyConnected(&acct, g, v)
 		}
 	}
@@ -26,7 +26,7 @@ func stronglyConnected(acct *sccAcct, g *Graph, v Vertex) int {
 
 	for _, raw := range g.downEdgesNoCopy(v) {
 		target := raw.(Vertex)
-		targetIdx := acct.VertexIndex[target]
+		targetIdx := acct.VertexIndex[hashcode(target)]
 
 		// Recurse on successor if not yet visited
 		if targetIdx == 0 {
@@ -44,7 +44,7 @@ func stronglyConnected(acct *sccAcct, g *Graph, v Vertex) int {
 		for {
 			v2 := acct.pop()
 			scc = append(scc, v2)
-			if v2 == v {
+			if hashcode(v2) == hashcode(v) {
 				break
 			}
 		}
@@ -74,7 +74,7 @@ type sccAcct struct {
 // visit assigns an index and pushes a vertex onto the stack
 func (s *sccAcct) visit(v Vertex) int {
 	idx := s.NextIndex
-	s.VertexIndex[v] = idx
+	s.VertexIndex[hashcode(v)] = idx
 	s.NextIndex++
 	s.push(v)
 	return idx
@@ -99,7 +99,7 @@ func (s *sccAcct) pop() Vertex {
 // inStack checks if a vertex is in the stack
 func (s *sccAcct) inStack(needle Vertex) bool {
 	for _, n := range s.Stack {
-		if n == needle {
+		if hashcode(n) == hashcode(needle) {
 			return true
 		}
 	}

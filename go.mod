@@ -1,3 +1,3 @@
-module github.com/silas/dag
+module github.com/sgoings/dag
 
-go 1.12
+go 1.16

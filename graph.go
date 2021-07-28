@@ -334,10 +334,10 @@ func (g *Graph) Dot(opts *DotOpts) []byte {
 // VertexName returns the name of a vertex.
 func VertexName(raw Vertex) string {
 	switch v := raw.(type) {
-	case NamedVertex:
-		return v.Name()
 	case fmt.Stringer:
 		return v.String()
+	case NamedVertex:
+		return v.Name()
 	default:
 		return fmt.Sprintf("%v", v)
 	}

@@ -119,7 +119,6 @@ func (e *marshalEdge) dot(g *marshalGraph) string {
 	if graphName == "" {
 		graphName = "root"
 	}
-
 	sourceName := g.vertexByID(e.Source).Name
 	targetName := g.vertexByID(e.Target).Name
 	s := fmt.Sprintf(`"[%s] %s" -> "[%s] %s"`, graphName, sourceName, graphName, targetName)

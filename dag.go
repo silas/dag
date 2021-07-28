@@ -18,13 +18,17 @@ type WalkFunc func(Vertex) Diagnostics
 // walk as an argument
 type DepthWalkFunc func(Vertex, int) error
 
+// BreadthWalkFun is a walk function that also receives the current depth of the
+// walk as an argument
+type BreadthWalkFunc func(Vertex, int) error
+
 func (g *AcyclicGraph) DirectedGraph() Grapher {
 	return g
 }
 
 // Returns a Set that includes every Vertex yielded by walking down from the
 // provided starting Vertex v.
-func (g *AcyclicGraph) Ancestors(v Vertex) (Set, error) {
+func (g *AcyclicGraph) Descendants(v Vertex) (Set, error) {
 	s := make(Set)
 	memoFunc := func(v Vertex, d int) error {
 		s.Add(v)
@@ -40,7 +44,7 @@ func (g *AcyclicGraph) Ancestors(v Vertex) (Set, error) {
 
 // Returns a Set that includes every Vertex yielded by walking up from the
 // provided starting Vertex v.
-func (g *AcyclicGraph) Descendents(v Vertex) (Set, error) {
+func (g *AcyclicGraph) Ancestors(v Vertex) (Set, error) {
 	s := make(Set)
 	memoFunc := func(v Vertex, d int) error {
 		s.Add(v)
@@ -133,7 +137,7 @@ func (g *AcyclicGraph) Validate() error {
 
 	// Look for cycles to self
 	for _, e := range g.Edges() {
-		if e.Source() == e.Target() {
+		if hashcode(e.Source()) == hashcode(e.Target()) {
 			diags = diags.Append(fmt.Errorf(
 				"Self reference: %s", VertexName(e.Source())))
 		}
@@ -193,10 +197,10 @@ func (g *AcyclicGraph) DepthFirstWalk(start Set, f DepthWalkFunc) error {
 		frontier = frontier[:n-1]
 
 		// Check if we've seen this already and return...
-		if _, ok := seen[current.Vertex]; ok {
+		if _, ok := seen[hashcode(current.Vertex)]; ok {
 			continue
 		}
-		seen[current.Vertex] = struct{}{}
+		seen[hashcode(current.Vertex)] = struct{}{}
 
 		// Visit the current node
 		if err := f(current.Vertex, current.Depth); err != nil {
@@ -209,6 +213,49 @@ func (g *AcyclicGraph) DepthFirstWalk(start Set, f DepthWalkFunc) error {
 				Depth:  current.Depth + 1,
 			})
 		}
+	}
+
+	return nil
+}
+
+// BreadthFirstWalk does a breadth-first walk of the graph starting from
+// the vertices in start.
+func (g *AcyclicGraph) BreadthFirstWalk(start Set, f BreadthWalkFunc) error {
+	seen := make(map[Vertex]struct{})
+	frontier := make([]*vertexAtDepth, 0, len(start))
+	for _, v := range start {
+		frontier = append(frontier, &vertexAtDepth{
+			Vertex: v,
+			Depth:  0,
+		})
+	}
+
+	for len(frontier) > 0 {
+		n := len(frontier)
+
+		for i := 0; i < n; i++ {
+			current := frontier[i]
+
+			// Check if we've seen this already and return...
+			if _, ok := seen[hashcode(current.Vertex)]; ok {
+				continue
+			}
+			seen[hashcode(current.Vertex)] = struct{}{}
+
+			// Visit the nodes in frontier
+			if err := f(current.Vertex, current.Depth); err != nil {
+				return err
+			}
+
+			for _, v := range g.downEdgesNoCopy(current.Vertex) {
+				frontier = append(frontier, &vertexAtDepth{
+					Vertex: v,
+					Depth:  current.Depth + 1,
+				})
+			}
+		}
+
+		frontier = frontier[n:]
 	}
 
 	return nil
