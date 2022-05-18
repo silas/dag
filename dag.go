@@ -85,9 +85,7 @@ func (g *AcyclicGraph) Root() (Vertex, error) {
 // same graph with only a single edge between A and B, and a single edge
 // between B and C.
 //
-// The graph must be valid for this operation to behave properly. If
-// Validate() returns an error, the behavior is undefined and the results
-// will likely be unexpected.
+// The graph must be free of cycles for this operation to behave properly.
 //
 // Complexity: O(V(V+E)), or asymptotically O(VE)
 func (g *AcyclicGraph) TransitiveReduction() {
@@ -142,6 +140,8 @@ func (g *AcyclicGraph) Validate() error {
 	return diags.Err()
 }
 
+// Cycles reports any cycles between graph nodes.
+// Self-referencing nodes are not reported, and must be detected separately.
 func (g *AcyclicGraph) Cycles() [][]Vertex {
 	var cycles [][]Vertex
 	for _, cycle := range StronglyConnected(&g.Graph) {
@@ -177,6 +177,8 @@ type vertexAtDepth struct {
 
 // DepthFirstWalk does a depth-first walk of the graph starting from
 // the vertices in start.
+// The algorithm used here does not do a complete topological sort. To ensure
+// correct overall ordering run TransitiveReduction first.
 func (g *AcyclicGraph) DepthFirstWalk(start Set, f DepthWalkFunc) error {
 	seen := make(map[Vertex]struct{})
 	frontier := make([]*vertexAtDepth, 0, len(start))
@@ -259,6 +261,8 @@ func (g *AcyclicGraph) SortedDepthFirstWalk(start []Vertex, f DepthWalkFunc) err
 
 // ReverseDepthFirstWalk does a depth-first walk _up_ the graph starting from
 // the vertices in start.
+// The algorithm used here does not do a complete topological sort. To ensure
+// correct overall ordering run TransitiveReduction first.
 func (g *AcyclicGraph) ReverseDepthFirstWalk(start Set, f DepthWalkFunc) error {
 	seen := make(map[Vertex]struct{})
 	frontier := make([]*vertexAtDepth, 0, len(start))
