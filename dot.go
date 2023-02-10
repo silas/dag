@@ -119,9 +119,26 @@ func (e *marshalEdge) dot(g *marshalGraph) string {
 	if graphName == "" {
 		graphName = "root"
 	}
+
+	sourceGraphName := graphName
+	targetGraphName := graphName
+
 	sourceName := g.vertexByID(e.Source).Name
-	targetName := g.vertexByID(e.Target).Name
-	s := fmt.Sprintf(`"[%s] %s" -> "[%s] %s"`, graphName, sourceName, graphName, targetName)
+
+	var targetName string
+	target := g.vertexByID(e.Target)
+	if target == nil {
+		// look for the vertex in a subgraph
+		for _, subgraph := range g.Subgraphs {
+			target = subgraph.vertexByID(e.Target)
+			if target != nil {
+				targetGraphName = subgraph.Name
+			}
+		}
+	}
+	targetName = target.Name
+
+	s := fmt.Sprintf(`"[%s] %s" -> "[%s] %s"`, sourceGraphName, sourceName, targetGraphName, targetName)
 	buf.WriteString(s)
 	writeAttrs(&buf, e.Attrs)
 
@@ -209,7 +226,7 @@ func (g *marshalGraph) writeBody(opts *DotOpts, w *indentWriter) {
 		dotEdges = append(dotEdges, e.dot(g))
 	}
 
-	// srot these again to match the old output
+	// sort these again to match the old output
 	sort.Strings(dotEdges)
 
 	for _, e := range dotEdges {

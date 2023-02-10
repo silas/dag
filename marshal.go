@@ -46,6 +46,15 @@ func (g *marshalGraph) vertexByID(id string) *marshalVertex {
 	return nil
 }
 
+func (g *marshalGraph) subgraphByID(id string) *marshalGraph {
+	for _, sg := range g.Subgraphs {
+		if id == sg.ID {
+			return sg
+		}
+	}
+	return nil
+}
+
 type marshalVertex struct {
 	// Unique ID, used to reference this vertex from other structures.
 	ID string
@@ -98,11 +107,16 @@ type marshalEdge struct {
 }
 
 func newMarshalEdge(e Edge) *marshalEdge {
+	name := fmt.Sprintf("%s|%s", VertexName(e.Source()), VertexName(e.Target()))
+	source := marshalVertexID(e.Source())
+	target := marshalVertexID(e.Target())
+	attrs := make(map[string]string)
+
 	return &marshalEdge{
-		Name:   fmt.Sprintf("%s|%s", VertexName(e.Source()), VertexName(e.Target())),
-		Source: marshalVertexID(e.Source()),
-		Target: marshalVertexID(e.Target()),
-		Attrs:  make(map[string]string),
+		Name:   name,
+		Source: source,
+		Target: target,
+		Attrs:  attrs,
 	}
 }
 
@@ -136,6 +150,25 @@ func newMarshalGraph(name string, g *Graph) *marshalGraph {
 	sort.Sort(vertices(mg.Vertices))
 
 	for _, e := range g.Edges() {
+		// var subgraph *AcyclicGraph
+
+		sg, ok := e.Target().(Subgrapher)
+		if ok {
+			switch g := sg.Subgraph().DirectedGraph().(type) {
+			case *Graph:
+				panic("cannot find root of *Graph")
+			case *AcyclicGraph:
+				if g != nil {
+					// subgraph = g
+					subgraphRoot, err := g.Root()
+					if err != nil {
+						panic(err)
+					}
+					e.SetTarget(subgraphRoot)
+				}
+			}
+		}
+
 		mg.Edges = append(mg.Edges, newMarshalEdge(e))
 	}
 
@@ -190,7 +223,9 @@ func marshalSubgrapher(v Vertex) (*Graph, bool) {
 	case *Graph:
 		return g, true
 	case *AcyclicGraph:
-		return &g.Graph, true
+		if g != nil {
+			return &g.Graph, true
+		}
 	}
 
 	return nil, false

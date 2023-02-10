@@ -4,6 +4,7 @@ package dag
 type Edge interface {
 	Source() Vertex
 	Target() Vertex
+	SetTarget(Vertex)
 
 	Hashable
 }
@@ -30,4 +31,8 @@ func (e *basicEdge) Source() Vertex {
 
 func (e *basicEdge) Target() Vertex {
 	return e.T
+}
+
+func (e *basicEdge) SetTarget(newTarget Vertex) {
+	e.T = newTarget
 }

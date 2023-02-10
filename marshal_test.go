@@ -1,8 +1,12 @@
 package dag
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGraphDot_empty(t *testing.T) {
@@ -99,3 +103,41 @@ const testGraphDotAttrsStr = `digraph {
 		"[root] foo" [foo = "bar"]
 	}
 }`
+
+func TestGraph_MultiGraph(t *testing.T) {
+	graph := createConnectedMultiSubgraph()
+
+	marshaledGraph := graph.Marshal()
+
+	jsonGraph, err := json.MarshalIndent(marshaledGraph, "", "  ")
+	assert.NoError(t, err)
+
+	fmt.Println(string(jsonGraph))
+
+	assert.Equal(t, 3, len(marshaledGraph.Vertices))
+
+	assert.Equal(t, "itemOne", marshaledGraph.Vertices[0].Name)
+	assert.Equal(t, "itemTwo", marshaledGraph.Vertices[1].Name)
+	assert.Equal(t, "subgraphOne", marshaledGraph.Vertices[2].Name)
+
+	assert.Equal(t, 1, len(marshaledGraph.Subgraphs))
+	assert.Equal(t, "subgraphOne", marshaledGraph.Subgraphs[0].Name)
+
+	assert.Equal(t, 2, len(marshaledGraph.Subgraphs[0].Vertices))
+	assert.Equal(t, "itemFour", marshaledGraph.Subgraphs[0].Vertices[0].Name)
+	assert.Equal(t, "itemThree", marshaledGraph.Subgraphs[0].Vertices[1].Name)
+
+	assert.Equal(t, &marshalEdge{
+		Name:   "itemOne|itemTwo",
+		Source: marshaledGraph.Vertices[0].ID,
+		Target: marshaledGraph.Vertices[1].ID,
+		Attrs:  map[string]string{},
+	}, marshaledGraph.Edges[0])
+
+	assert.Equal(t, &marshalEdge{
+		Name:   "itemTwo|itemThree",
+		Source: marshaledGraph.Vertices[1].ID,
+		Target: marshaledGraph.Subgraphs[0].Vertices[1].ID,
+		Attrs:  map[string]string{},
+	}, marshaledGraph.Edges[1])
+}

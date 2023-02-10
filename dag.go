@@ -250,10 +250,33 @@ func (g *AcyclicGraph) BreadthFirstWalk(start Set, f BreadthWalkFunc) error {
 			}
 
 			for _, v := range g.downEdgesNoCopy(current.Vertex) {
+				// // if vertex is a subgraph, add vertexes to frontier
+				// sg, ok := v.(Subgrapher)
+				// if ok {
+				// 	var graph *AcyclicGraph
+				// 	switch grapherType := sg.Subgraph().DirectedGraph().(type) {
+				// 	case *Graph:
+				// 		panic("can't traverse *Graph, use *AcyclicGraph instead")
+				// 	case *AcyclicGraph:
+				// 		graph = grapherType
+				// 	}
+				// 	subraphRoot, err := graph.Root()
+				// 	if err != nil {
+				// 		panic("can't find root of subgraph")
+				// 	}
+				// 	graph.BreadthFirstWalk(Set{"root": subraphRoot}, func(v Vertex, depth int) error {
+				// 		frontier = append(frontier, &vertexAtDepth{
+				// 			Vertex: v,
+				// 			Depth:  current.Depth + 1,
+				// 		})
+				// 		return nil
+				// 	})
+				// } else {
 				frontier = append(frontier, &vertexAtDepth{
 					Vertex: v,
 					Depth:  current.Depth + 1,
 				})
+				// }
 			}
 		}
 

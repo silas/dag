@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -471,3 +473,62 @@ const testGraphTransReductionMultipleRootsStr = `
   8
 8
 `
+
+func createConnectedMultiSubgraph() *AcyclicGraph {
+	graph := &AcyclicGraph{}
+	v1 := graph.Add(&ComplexObject{
+		Name: "itemOne",
+	})
+	v2 := graph.Add(&ComplexObject{
+		Name: "itemTwo",
+	})
+
+	subgraph := &AcyclicGraph{}
+	v3 := subgraph.Add(&ComplexObject{
+		Name: "itemThree",
+	})
+	v4 := subgraph.Add(&ComplexObject{
+		Name: "itemFour",
+	})
+	subgraph.Connect(BasicEdge(v3, v4))
+	s1 := graph.Add(&ComplexObject{
+		Name:  "subgraphOne",
+		Graph: subgraph,
+	})
+
+	graph.Connect(BasicEdge(v1, v2))
+	graph.Connect(BasicEdge(v2, s1))
+
+	return graph
+}
+
+func TestGraph_ConnectedMultiSubgraphBFS(t *testing.T) {
+	expectedVisitOrder := []string{"itemOne", "itemTwo", "subgraphOne", "itemThree", "itemFour"}
+	actualVisitOrder := []string{}
+
+	cms := createConnectedMultiSubgraph()
+
+	root, err := cms.Root()
+	assert.NoError(t, err)
+
+	cms.BreadthFirstWalk(Set{"root": root}, func(v Vertex, i int) error {
+		co := v.(*ComplexObject)
+		if co.Graph != nil {
+			actualVisitOrder = append(actualVisitOrder, co.Hashcode())
+			subgraphRoot, err := co.Graph.Root()
+			if err != nil {
+				panic("can't find root of subgraph")
+			}
+			co.Graph.BreadthFirstWalk(Set{"root": subgraphRoot}, func(v Vertex, i int) error {
+				co := v.(*ComplexObject)
+				actualVisitOrder = append(actualVisitOrder, co.Hashcode())
+				return nil
+			})
+		} else {
+			actualVisitOrder = append(actualVisitOrder, co.Hashcode())
+		}
+		return nil
+	})
+
+	assert.Equal(t, expectedVisitOrder, actualVisitOrder)
+}

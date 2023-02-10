@@ -342,3 +342,8 @@ func VertexName(raw Vertex) string {
 		return fmt.Sprintf("%v", v)
 	}
 }
+
+// Marshal returns a json representation of the Graph.
+func (g *Graph) Marshal() *marshalGraph {
+	return newMarshalGraph("", g)
+}
